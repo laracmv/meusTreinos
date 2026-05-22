@@ -51,6 +51,11 @@ header{padding:2rem 1.5rem 1.2rem;border-bottom:1px solid var(--border);position
 .tag{background:var(--tag-bg);border:1px solid var(--border);border-radius:20px;padding:3px 9px;font-size:0.72rem;color:var(--muted);font-family:'DM Mono',monospace;}
 .tag.series{color:var(--accent);border-color:rgba(200,241,53,0.25);background:var(--accent-dim);}
 .tag.mob-tag{color:var(--mob);border-color:var(--mob-border);background:var(--mob-dim);}
+.tag.rest-tag{color:var(--muted);border-color:var(--border);}
+.ex-header-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;}
+.predio-chip{display:inline-flex;align-items:center;gap:4px;background:transparent;border:1px solid rgba(244,163,54,0.35);color:var(--orange);font-size:0.7rem;font-family:'DM Mono',monospace;padding:3px 9px;border-radius:20px;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
+.predio-chip:hover{background:var(--orange-dim);}
+.predio-chip.active{background:var(--orange-dim);border-color:var(--orange);}
 .expand-icon{color:var(--muted);font-size:1.1rem;margin-top:2px;transition:transform 0.25s;flex-shrink:0;}
 .exercise-card.open .expand-icon{transform:rotate(180deg);}
 .exercise-body{display:none;padding:0 1.1rem 1.1rem;border-top:1px solid var(--border);}
@@ -83,10 +88,12 @@ header{padding:2rem 1.5rem 1.2rem;border-bottom:1px solid var(--border);position
 .icon-btn.yt:hover{border-color:#e63946;color:#e63946;}
 .icon-btn.edit-btn:hover{border-color:var(--accent);color:var(--accent);}
 .icon-btn.del-btn:hover{border-color:#e63946;color:#e63946;}
+.icon-btn.predio-btn{color:var(--orange);border-color:rgba(244,163,54,0.35);}
+.icon-btn.predio-btn.active{background:var(--orange-dim);border-color:var(--orange);}
 .icon-btn svg{width:13px;height:13px;flex-shrink:0;}
 
-/* Sub section */
-.sub-section{margin-top:10px;border-top:1px dashed var(--border);padding-top:10px;display:none;}
+/* Sub section — shown per card via toggle */
+.sub-section{margin-top:10px;border-top:1px dashed rgba(244,163,54,0.3);padding-top:10px;display:none;}
 .sub-section.visible{display:block;}
 .sub-label{font-size:0.7rem;font-family:'DM Mono',monospace;color:var(--orange);margin-bottom:5px;}
 .sub-name{font-size:0.86rem;font-weight:500;color:var(--text);margin-bottom:3px;}
@@ -171,7 +178,6 @@ header{padding:2rem 1.5rem 1.2rem;border-bottom:1px solid var(--border);position
 <header>
   <div class="logo">// meus treinos</div>
   <div class="header-right">
-    <button class="hbtn hbtn-outline" id="modeBtn" onclick="toggleMode()">🏠 Prédio</button>
     <button class="hbtn hbtn-fill" onclick="saveAll()">Salvar cargas</button>
   </div>
 </header>
@@ -184,7 +190,6 @@ header{padding:2rem 1.5rem 1.2rem;border-bottom:1px solid var(--border);position
 <script>
 const SCRIPT_URL='https://script.google.com/macros/s/AKfycbx07M6zoHa89YOEK9tBbiaCj7z1zE7NWl8-u0ybXCZ_bJZEjCFHZS1R4ILLwVe0_RHk8g/exec';
 
-let predioMode=false;
 let editingTreino=null, editingIndex=null;
 let progCharts={};
 
@@ -242,15 +247,70 @@ const defaultTreinos=[
 ];
 
 // ── STATE ───────────────────────────────────────────────────────────────────
-function loadTreinos(){
+function loadTreinosCache(){
   try{const s=localStorage.getItem('treino_data');return s?JSON.parse(s):JSON.parse(JSON.stringify(defaultTreinos));}
   catch{return JSON.parse(JSON.stringify(defaultTreinos));}
 }
-function saveTreinos(t){localStorage.setItem('treino_data',JSON.stringify(t));}
 function loadCargas(){try{return JSON.parse(localStorage.getItem('treino_cargas')||'{}');}catch{return {};}}
 
-let treinos=loadTreinos();
+let treinos=loadTreinosCache();
 let saved=loadCargas();
+let syncStatus='cache'; // 'cache' | 'synced' | 'syncing' | 'error'
+
+function setSyncStatus(s, msg){
+  syncStatus=s;
+  const el=document.getElementById('sync-status');
+  if(!el)return;
+  const map={
+    synced:`<span style="color:var(--accent)">✓ sincronizado</span> às ${msg}`,
+    syncing:`<span style="color:var(--orange)">⟳ sincronizando...</span>`,
+    cache:`<span style="color:var(--muted)">📱 cache local</span> — sem internet`,
+    error:`<span style="color:#e63946">⚠ erro ao sincronizar</span>`
+  };
+  el.innerHTML=map[s]||msg;
+}
+
+// Save treinos: local cache + background sync to Sheets
+function saveTreinos(t){
+  localStorage.setItem('treino_data',JSON.stringify(t));
+  setSyncStatus('syncing');
+  fetch(SCRIPT_URL,{
+    method:'POST',
+    body:JSON.stringify({type:'save_treinos',treinos:t})
+  }).then(r=>r.json()).then(res=>{
+    if(res.ok){
+      const ts=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+      localStorage.setItem('last_sync',ts);
+      setSyncStatus('synced',ts);
+    } else setSyncStatus('error');
+  }).catch(()=>setSyncStatus('cache'));
+}
+
+// On load: try to fetch treinos from Sheets, fall back to cache
+function initTreinos(){
+  setSyncStatus('syncing');
+  fetch(SCRIPT_URL+'?t='+Date.now())
+    .then(r=>r.json())
+    .then(res=>{
+      if(res.ok){
+        if(res.treinos){
+          treinos=res.treinos;
+          localStorage.setItem('treino_data',JSON.stringify(treinos));
+        }
+        if(res.rows){
+          sheetsData=res.rows.map(r=>({data:r[0],treino:r[1],exercicio:r[2],serie:r[3],carga:parseFloat(r[4])||0,key:r[5]}));
+          localStorage.setItem('sheets_cache',JSON.stringify(sheetsData));
+        }
+        const ts=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+        localStorage.setItem('last_sync',ts);
+        setSyncStatus('synced',ts);
+        render();
+      } else setSyncStatus('error');
+    })
+    .catch(()=>{
+      setSyncStatus('cache');
+    });
+}
 
 // ── HELPERS ─────────────────────────────────────────────────────────────────
 function nextKey(treinoId){
@@ -272,7 +332,6 @@ function saveAll(){
   localStorage.setItem('treino_cargas',JSON.stringify(c));
   saved=c;
 
-  // Build entries for Sheets — one row per exercise/series
   const activeTab=document.querySelector('.tab.active');
   const treinoNome=activeTab?activeTab.textContent:'';
   const entradas=[];
@@ -292,32 +351,33 @@ function saveAll(){
   });
 
   if(entradas.length>0){
-    const syncBtn=document.getElementById('sync-status');
-    if(syncBtn){syncBtn.textContent='⟳ sincronizando...';syncBtn.classList.add('syncing');}
+    setSyncStatus('syncing');
     fetch(SCRIPT_URL,{
       method:'POST',
-      body:JSON.stringify({data:hoje,treino:treinoNome,entradas}),
-    }).then(r=>r.json()).then(()=>{
-      const ts=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-      localStorage.setItem('last_sync',ts);
-      if(syncBtn){syncBtn.textContent='✓ sincronizado às '+ts;syncBtn.classList.remove('syncing');}
-    }).catch(()=>{
-      if(syncBtn){syncBtn.textContent='⚠ erro ao sincronizar';syncBtn.classList.remove('syncing');}
-    });
+      body:JSON.stringify({type:'save_historico',data:hoje,treino:treinoNome,entradas}),
+    }).then(r=>r.json()).then(res=>{
+      if(res.ok){
+        const ts=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+        localStorage.setItem('last_sync',ts);
+        setSyncStatus('synced',ts);
+      } else setSyncStatus('error');
+    }).catch(()=>setSyncStatus('cache'));
   }
 
   const n=document.getElementById('saved-notice');
   n.classList.add('show');setTimeout(()=>n.classList.remove('show'),2000);
 }
 
-function toggleMode(){
-  predioMode=!predioMode;
-  const btn=document.getElementById('modeBtn');
-  btn.textContent=predioMode?'🏋 Academia':'🏠 Prédio';
-  btn.classList.toggle('active',predioMode);
-  document.querySelectorAll('.sub-section').forEach(el=>el.classList.toggle('visible',predioMode));
-}
 function toggleCard(id){document.getElementById(id).classList.toggle('open');}
+
+function togglePredio(key){
+  const sub=document.getElementById('sub-'+key);
+  const btn=document.getElementById('prediobtn-'+key);
+  if(!sub)return;
+  const isVisible=sub.classList.toggle('visible');
+  btn.classList.toggle('active',isVisible);
+  btn.textContent=isVisible?'🏋 academia':'🏠 prédio';
+}
 
 // ── RENDER ──────────────────────────────────────────────────────────────────
 function render(){
@@ -385,13 +445,21 @@ function render(){
 
       let subHtml='';
       if(ex.sub){
-        subHtml=`<div class="sub-section${predioMode?' visible':''}">
-  <div class="sub-label">🏠 substituição para o prédio</div>
+        subHtml=`<div class="sub-section" id="sub-${ex.carga_key}">
+  <div class="sub-label">🏠 versão prédio</div>
   <div class="sub-name">${ex.sub.nome}</div>
   <div class="sub-tip">${ex.sub.dica}</div>
   <div style="margin-top:8px;"><a class="icon-btn yt" href="${ex.sub.video}" target="_blank"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46A2.78 2.78 0 0 0 1.46 6.42 29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58 2.78 2.78 0 0 0 1.95 1.96C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.96-1.96A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z"/><polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02"/></svg>Ver substituição</a></div>
 </div>`;
       }
+
+      const descansoTag = ex.descanso
+        ? `<span class="tag rest-tag">⏱ ${ex.descanso}</span>`
+        : '';
+
+      const predioChip = ex.sub
+        ? `<button class="predio-chip" id="prediobtn-${ex.carga_key}" onclick="event.stopPropagation();togglePredio('${ex.carga_key}')">🏠 prédio</button>`
+        : '';
 
       const cardHtml=`<div class="exercise-card${mobClass}" id="${cardId}">
   <div class="exercise-header" onclick="toggleCard('${cardId}')">
@@ -399,6 +467,7 @@ function render(){
     <div class="ex-info">
       <div class="ex-name">${ex.nome}</div>
       <div class="ex-meta" id="${metaId}">${mobTagHtml}<span class="tag series">⟳ ${seriesTag}</span>${savedBadge}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:5px;align-items:center;">${descansoTag}${predioChip}</div>
     </div>
     <span class="expand-icon">↓</span>
   </div>
@@ -417,13 +486,11 @@ function render(){
       if(ex.biset_com_proximo){
         html+=`<div class="biset-label">bi-set — faça os dois em sequência</div><div class="biset-connector"><div class="biset-bar"></div><div class="biset-card-wrap">${cardHtml}`;
       } else if(ei>0&&treino.exercicios[ei-1]&&treino.exercicios[ei-1].biset_com_proximo){
-        html+=cardHtml+`</div></div><div class="biset-rest">descanso 1:00 após o bi-set</div>`;
+        html+=cardHtml+`</div></div><div class="biset-rest">descanso após o bi-set</div>`;
       } else {
         html+=cardHtml;
         if(ei<treino.exercicios.length-1){
-          const desc=ex.descanso||'1:00';
-          const lbl=ex.descanso_label||`descanso após exercício ${ex.num}`;
-          html+=`<div class="rest-wrap"><div class="rest-block"><div class="rest-line"></div><div class="rest-pill">⏱ ${lbl} — ${desc}</div><div class="rest-line"></div></div></div>`;
+          html+=`<div style="height:8px;"></div>`;
         }
       }
     });
@@ -657,8 +724,9 @@ function showModal(ex){
   <div class="modal-title">${editingIndex===null?'Novo exercício':'Editar exercício'}</div>
   <div class="form-group"><label class="form-label">Nome do exercício</label><input class="form-input" id="f-nome" value="${ex.nome||''}"></div>
   <div class="form-group"><label class="form-check"><input type="checkbox" id="f-mobility" ${ex.mobility?'checked':''}> Exercício de mobilidade (destaque roxo)</label></div>
+  <div class="form-group"><label class="form-check"><input type="checkbox" id="f-biset" ${ex.biset_com_proximo?'checked':''}> Bi-set com o próximo exercício</label></div>
   <div class="form-group">
-    <label class="form-check" id="multi-toggle-wrap"><input type="checkbox" id="f-multi" ${isMulti?'checked':''} onchange="toggleMultiSeries()"> Séries com cargas diferentes</label>
+    <label class="form-check"><input type="checkbox" id="f-multi" ${isMulti?'checked':''} onchange="toggleMultiSeries()"> Séries com cargas diferentes</label>
   </div>
   <div id="single-series-wrap" style="display:${isMulti?'none':'block'}">
     <div class="form-group"><label class="form-label">Séries / repetições (ex: 3 x 10a12)</label><input class="form-input" id="f-series" value="${ex.series||''}"></div>
@@ -669,7 +737,6 @@ function showModal(ex){
     <button class="add-series-btn" onclick="addSeriesRow()">+ adicionar série</button>
   </div>
   <div class="form-group" style="margin-top:1rem"><label class="form-label">Descanso (ex: 1:00 ou 0:30)</label><input class="form-input" id="f-descanso" value="${ex.descanso||'1:00'}"></div>
-  <div class="form-group"><label class="form-label">Label do descanso (opcional, ex: descanso após mobilidade)</label><input class="form-input" id="f-descanso-label" value="${ex.descanso_label||''}"></div>
   <div class="form-group"><label class="form-label">URL do vídeo (YouTube)</label><input class="form-input" id="f-video" value="${ex.video||''}"></div>
   <div class="form-group"><label class="form-label">URL da foto (Unsplash, imgur, etc.)</label><input class="form-input" id="f-img" value="${ex.img||''}"></div>
   <div class="form-group"><label class="form-label">Substituição no prédio — nome</label><input class="form-input" id="f-sub-nome" value="${ex.sub?ex.sub.nome:''}"></div>
@@ -725,10 +792,10 @@ function saveModal(){
   const ex={
     nome:document.getElementById('f-nome').value.trim(),
     mobility:document.getElementById('f-mobility').checked,
+    biset_com_proximo:document.getElementById('f-biset').checked,
     video:document.getElementById('f-video').value.trim(),
     img:document.getElementById('f-img').value.trim(),
     descanso:document.getElementById('f-descanso').value.trim()||'1:00',
-    descanso_label:document.getElementById('f-descanso-label').value.trim(),
     sub:(subNome||subDica)?{nome:subNome,dica:subDica,video:subVideo}:null,
   };
   if(isMulti){ex.series_cargas=seriesList;}
@@ -785,7 +852,9 @@ function updateMultiTag(baseKey,count){
   } else if(badge) badge.remove();
 }
 
+// Boot: render from cache immediately, then fetch from Sheets in background
 render();
+initTreinos();
 </script>
 </body>
 </html>
