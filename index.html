@@ -147,6 +147,85 @@ header{padding:2rem 1.5rem 1.2rem;border-bottom:1px solid var(--border);position
 .saved-notice{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--accent);color:#0f0f0f;font-weight:600;font-size:0.82rem;padding:9px 22px;border-radius:40px;opacity:0;transition:opacity 0.3s;pointer-events:none;z-index:999;}
 .saved-notice.show{opacity:1;}
 
+/* Workout mode */
+.workout-bar{display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;background:rgba(10,10,10,0.98);backdrop-filter:blur(10px);border-top:2px solid var(--accent);padding:12px 1.2rem;align-items:center;gap:12px;}
+.workout-bar.active{display:flex;}
+.timer-display{font-family:'DM Mono',monospace;font-size:1.8rem;color:var(--accent);font-weight:500;min-width:82px;letter-spacing:0.05em;}
+.workout-bar-mid{flex:1;display:flex;flex-direction:column;gap:4px;min-width:0;}
+.workout-progress-text{font-size:0.72rem;color:var(--muted);font-family:'DM Mono',monospace;}
+.progress-dots{display:flex;gap:3px;flex-wrap:wrap;}
+.progress-dot{width:6px;height:6px;border-radius:50%;background:var(--border);transition:background 0.2s;}
+.progress-dot.done{background:var(--accent);}
+.finish-btn{background:#e63946;color:#fff;border:none;padding:9px 16px;border-radius:40px;font-family:'DM Sans',sans-serif;font-weight:600;font-size:0.82rem;cursor:pointer;transition:opacity 0.2s;white-space:nowrap;flex-shrink:0;}
+.finish-btn:hover{opacity:0.85;}
+body.workout-mode-on{padding-bottom:80px;}
+.ex-check{width:24px;height:24px;border-radius:50%;border:2px solid var(--border);background:transparent;cursor:pointer;flex-shrink:0;display:none;transition:all 0.15s;margin-top:1px;}
+.workout-mode-on .ex-check{display:flex;align-items:center;justify-content:center;}
+.ex-check.done{background:var(--accent);border-color:var(--accent);}
+.ex-check.done::after{content:'✓';font-size:0.72rem;color:#0f0f0f;font-weight:700;}
+.exercise-card.done-card{opacity:0.45;}
+.exercise-card.done-card .ex-name{text-decoration:line-through;}
+
+/* Card shake */
+@keyframes card-shake{
+  0%{transform:translateX(0);}
+  15%{transform:translateX(-8px);}
+  30%{transform:translateX(7px);}
+  45%{transform:translateX(-6px);}
+  60%{transform:translateX(5px);}
+  75%{transform:translateX(-3px);}
+  100%{transform:translateX(0);}
+}
+.card-shaking{animation:card-shake 0.45s ease-out;}
+
+/* Dino hit — 3 frame image animation */
+.dino-hit{
+  position:absolute;
+  left:8px;
+  top:50%;
+  transform:translateY(-50%) translateX(-140px);
+  width:80px;
+  height:80px;
+  pointer-events:none;
+  z-index:100;
+  filter:drop-shadow(0 0 6px rgba(200,241,53,0.5));
+  animation:dino-run 1.4s ease-out forwards;
+}
+.dino-hit img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  display:block;
+}
+@keyframes dino-run{
+  0%  {opacity:0; transform:translateY(-50%) translateX(-140px);}
+  20% {opacity:1; transform:translateY(-50%) translateX(20px);}
+  38% {opacity:1; transform:translateY(-60%) translateX(40px) rotate(-12deg) scale(1.25);}
+  52% {opacity:1; transform:translateY(-42%) translateX(35px) rotate(8deg) scale(1.15);}
+  65% {opacity:1; transform:translateY(-50%) translateX(40px) scale(1.05);}
+  82% {opacity:1; transform:translateY(-50%) translateX(10px);}
+  100%{opacity:0; transform:translateY(-50%) translateX(-120px);}
+}
+
+/* Celebration */
+.celebration-overlay{position:fixed;inset:0;z-index:1000;pointer-events:none;}
+.firework{position:absolute;border-radius:50%;}
+@keyframes fw{0%{transform:translate(0,0) scale(1);opacity:1;}100%{transform:translate(var(--tx),var(--ty)) scale(0);opacity:0;}}
+.dino-wrap{position:fixed;bottom:120px;left:50%;transform:translateX(-50%);z-index:1001;text-align:center;pointer-events:none;animation:dino-bounce 0.4s ease infinite alternate;}
+@keyframes dino-bounce{from{transform:translateX(-50%) translateY(0);}to{transform:translateX(-50%) translateY(-12px);}}
+.dino-emoji{font-size:4rem;display:block;}
+.dino-label{font-size:0.8rem;font-family:'DM Mono',monospace;color:var(--accent);margin-top:4px;}
+
+/* Summary modal */
+.summary-grid{display:flex;flex-direction:column;gap:8px;margin:1rem 0;}
+.summary-row{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--surface2);border-radius:8px;gap:8px;}
+.summary-ex{font-size:0.82rem;color:var(--text);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.summary-delta{font-size:0.78rem;font-family:'DM Mono',monospace;font-weight:600;flex-shrink:0;}
+.delta-up{color:#c8f135;}
+.delta-down{color:#e63946;}
+.delta-same{color:#888;}
+.summary-time{text-align:center;font-family:'DM Mono',monospace;font-size:2rem;color:var(--accent);font-weight:500;margin:0.5rem 0 1rem;}
+
 /* Progress tab */
 .prog-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:1.2rem;}
 .prog-title{font-size:1.5rem;font-weight:600;}
@@ -178,9 +257,19 @@ header{padding:2rem 1.5rem 1.2rem;border-bottom:1px solid var(--border);position
 <header>
   <div class="logo">// meus treinos</div>
   <div class="header-right">
+    <button class="hbtn hbtn-outline" id="startBtn" onclick="startWorkout()">▶ Iniciar Treino</button>
     <button class="hbtn hbtn-fill" onclick="saveAll()">Salvar cargas</button>
   </div>
 </header>
+<div class="workout-bar" id="workout-bar">
+  <div class="timer-display" id="timer">00:00</div>
+  <div class="workout-bar-mid">
+    <div class="workout-progress-text" id="workout-progress-text">0 / 0 exercícios</div>
+    <div class="progress-dots" id="progress-dots"></div>
+  </div>
+  <button class="finish-btn" onclick="finishWorkout()">✓ Finalizar</button>
+</div>
+<div class="workout-bar-spacer" id="workout-bar-spacer"></div>
 <div class="tabs" id="tabs"></div>
 <div id="panels"></div>
 <div id="modal-root"></div>
@@ -371,12 +460,237 @@ function saveAll(){
 function toggleCard(id){document.getElementById(id).classList.toggle('open');}
 
 function togglePredio(key){
-  const sub=document.getElementById('sub-'+key);
+  const card=document.getElementById('card-'+key);
   const btn=document.getElementById('prediobtn-'+key);
-  if(!sub)return;
-  const isVisible=sub.classList.toggle('visible');
-  btn.classList.toggle('active',isVisible);
-  btn.textContent=isVisible?'🏋 academia':'🏠 prédio';
+  const nameEl=document.getElementById('name-'+key);
+  const seriesTagEl=document.getElementById('series-tag-'+key);
+  const imgWrap=document.getElementById('img-wrap-'+key);
+  const ytBtn=document.getElementById('yt-btn-'+key);
+  const sub=document.getElementById('sub-'+key);
+  if(!card||!btn)return;
+
+  const isPredi=btn.classList.toggle('active');
+
+  if(isPredi){
+    // swap to predio version
+    if(card.dataset.subNome) nameEl.textContent=card.dataset.subNome;
+    if(card.dataset.subImg) imgWrap.innerHTML=`<img src="${card.dataset.subImg}" alt="prédio" loading="lazy" onerror="this.parentElement.innerHTML='<div class=ex-image-placeholder><span>📷</span>sem foto</div>'">`;
+    if(card.dataset.subVideo) ytBtn.href=card.dataset.subVideo;
+    btn.textContent='🏋 academia';
+    if(sub) sub.classList.add('visible');
+  } else {
+    // swap back to academia
+    if(card.dataset.origNome) nameEl.textContent=card.dataset.origNome;
+    if(card.dataset.origImg) imgWrap.innerHTML=`<img src="${card.dataset.origImg}" alt="academia" loading="lazy" onerror="this.parentElement.innerHTML='<div class=ex-image-placeholder><span>📷</span>sem foto</div>'">`;
+    else imgWrap.innerHTML=`<div class="ex-image-placeholder"><span>📷</span>sem foto</div>`;
+    if(card.dataset.origVideo) ytBtn.href=card.dataset.origVideo;
+    btn.textContent='🏠 prédio';
+    if(sub) sub.classList.remove('visible');
+  }
+}
+
+// ── WORKOUT MODE ─────────────────────────────────────────────────────────────
+let workoutActive=false;
+let workoutStart=null;
+let timerInterval=null;
+let doneKeys=new Set();
+
+function startWorkout(){
+  workoutActive=true;
+  workoutStart=Date.now();
+  doneKeys.clear();
+
+  document.getElementById('workout-bar').classList.add('active');
+  document.getElementById('startBtn').textContent='⏹ Parar';
+  document.getElementById('startBtn').onclick=cancelWorkout;
+  document.body.classList.add('workout-mode-on');
+
+  timerInterval=setInterval(()=>{
+    const elapsed=Math.floor((Date.now()-workoutStart)/1000);
+    const m=Math.floor(elapsed/60).toString().padStart(2,'0');
+    const s=(elapsed%60).toString().padStart(2,'0');
+    document.getElementById('timer').textContent=m+':'+s;
+  },1000);
+
+  updateWorkoutProgress();
+}
+
+function cancelWorkout(){
+  stopTimer();
+  workoutActive=false;
+  doneKeys.clear();
+  document.getElementById('workout-bar').classList.remove('active');
+  document.getElementById('startBtn').textContent='▶ Iniciar Treino';
+  document.getElementById('startBtn').onclick=startWorkout;
+  document.body.classList.remove('workout-mode-on');
+  document.querySelectorAll('.ex-check').forEach(c=>c.classList.remove('done'));
+  document.querySelectorAll('.exercise-card').forEach(c=>{
+    c.classList.remove('done-card','card-shaking');
+    c.style.overflow='';
+  });
+}
+
+function stopTimer(){
+  if(timerInterval){clearInterval(timerInterval);timerInterval=null;}
+}
+
+function toggleDone(key,cardId){
+  if(!workoutActive)return;
+  const check=document.getElementById('check-'+key);
+  const card=document.getElementById(cardId);
+  if(doneKeys.has(key)){
+    doneKeys.delete(key);
+    check.classList.remove('done');
+    card.classList.remove('done-card');
+  } else {
+    doneKeys.add(key);
+    check.classList.add('done');
+    card.classList.add('done-card');
+    // Dino charges in with 3-frame animation
+    card.style.position='relative';
+    card.style.overflow='visible';
+    const dino=document.createElement('div');
+    dino.className='dino-hit';
+    const dinoBase='https://laracmv.github.io/meus-treinos/assets/dino/';
+    const img=document.createElement('img');
+    img.src=dinoBase+'dino1.png';
+    dino.appendChild(img);
+    card.appendChild(dino);
+    // Cycle frames: dino1 → dino2 → dino3 at impact → back to dino1
+    setTimeout(()=>img.src=dinoBase+'dino2.png', 300);
+    setTimeout(()=>img.src=dinoBase+'dino3.png', 530); // impact frame
+    setTimeout(()=>{
+      card.classList.add('card-shaking');
+      setTimeout(()=>card.classList.remove('card-shaking'),450);
+    },590);
+    setTimeout(()=>img.src=dinoBase+'dino1.png', 780);
+    setTimeout(()=>dino.remove(),1400);
+  }
+  updateWorkoutProgress();
+}
+
+function updateWorkoutProgress(){
+  // Only count cards in the currently active panel
+  const activePanel=document.querySelector('.workout-panel.active');
+  const allCards=activePanel?activePanel.querySelectorAll('.exercise-card'):[];
+  const total=allCards.length;
+  const done=[...allCards].filter(c=>{
+    const key=c.id.replace('card-','');
+    return doneKeys.has(key);
+  }).length;
+  document.getElementById('workout-progress-text').textContent=`${done} / ${total} exercícios`;
+  const dots=document.getElementById('progress-dots');
+  dots.innerHTML=[...allCards].map(c=>{
+    const key=c.id.replace('card-','');
+    return `<div class="progress-dot${doneKeys.has(key)?' done':''}"></div>`;
+  }).join('');
+}
+
+function launchCelebration(){
+  // Fireworks
+  const overlay=document.createElement('div');
+  overlay.className='celebration-overlay';
+  document.body.appendChild(overlay);
+
+  const colors=['#c8f135','#f4a336','#e63946','#a78bfa','#38bdf8','#fb7185','#facc15'];
+  for(let i=0;i<80;i++){
+    setTimeout(()=>{
+      const fw=document.createElement('div');
+      fw.className='firework';
+      const x=10+Math.random()*80;
+      const y=10+Math.random()*70;
+      const tx=(Math.random()-0.5)*200+'px';
+      const ty=(Math.random()-0.5)*200+'px';
+      fw.style.cssText=`left:${x}%;top:${y}%;background:${colors[Math.floor(Math.random()*colors.length)]};--tx:${tx};--ty:${ty};animation:fw ${0.5+Math.random()*0.8}s ease-out forwards;width:${4+Math.random()*6}px;height:${4+Math.random()*6}px;`;
+      overlay.appendChild(fw);
+    },Math.random()*2000);
+  }
+
+  // Dino
+  const dino=document.createElement('div');
+  dino.className='dino-wrap';
+  dino.innerHTML=`<img src="https://laracmv.github.io/meus-treinos/assets/dino/dino3.png" style="width:80px;height:80px;object-fit:contain;filter:drop-shadow(0 0 10px rgba(200,241,53,0.8))"><div class="dino-label">treino concluído!</div>`;
+  document.body.appendChild(dino);
+
+  setTimeout(()=>{
+    overlay.remove();
+    dino.remove();
+  },3500);
+}
+
+function finishWorkout(){
+  stopTimer();
+  const elapsed=Math.floor((Date.now()-workoutStart)/1000);
+  const m=Math.floor(elapsed/60).toString().padStart(2,'0');
+  const s=(elapsed%60).toString().padStart(2,'0');
+  const totalTime=m+':'+s;
+
+  const c={};
+  document.querySelectorAll('.load-input,.series-input').forEach(inp=>{if(inp.value)c[inp.dataset.key]=inp.value;});
+  localStorage.setItem('treino_cargas',JSON.stringify(c));
+  saved=c;
+
+  const activeTab=document.querySelector('.tab.active');
+  const treinoNome=activeTab?activeTab.textContent:'';
+  const hoje=new Date().toLocaleDateString('pt-BR');
+  const entradas=[];
+  treinos.forEach(treino=>{
+    treino.exercicios.forEach(ex=>{
+      if(ex.series_cargas){
+        ex.series_cargas.forEach((s,si)=>{
+          const key=ex.carga_key+'_s'+si;
+          if(c[key]) entradas.push({exercicio:ex.nome,serie:s.label,carga:parseFloat(c[key]),key});
+        });
+      } else {
+        if(c[ex.carga_key]) entradas.push({exercicio:ex.nome,serie:'Geral',carga:parseFloat(c[ex.carga_key]),key:ex.carga_key});
+      }
+    });
+  });
+
+  const summary=entradas.map(e=>{
+    const prev=sheetsData.filter(r=>r.key===e.key).slice(-1)[0];
+    const delta=prev?e.carga-prev.carga:null;
+    return {...e,delta};
+  }).filter(e=>e.carga>0);
+
+  if(entradas.length>0){
+    fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({type:'save_historico',data:hoje,treino:treinoNome,entradas})})
+      .then(r=>r.json()).then(res=>{
+        if(res.ok){
+          const ts=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+          localStorage.setItem('last_sync',ts);
+          setSyncStatus('synced',ts);
+          sheetsData=[...sheetsData,...entradas.map(e=>({data:hoje,treino:treinoNome,...e}))];
+          localStorage.setItem('sheets_cache',JSON.stringify(sheetsData));
+        }
+      }).catch(()=>setSyncStatus('cache'));
+  }
+
+  cancelWorkout();
+  launchCelebration();
+  setTimeout(()=>showSummaryModal(totalTime,summary),1200);
+}
+
+function showSummaryModal(time,summary){
+  const rows=summary.map(e=>{
+    let deltaHtml='';
+    if(e.delta===null) deltaHtml=`<span class="summary-delta delta-same">novo</span>`;
+    else if(e.delta>0) deltaHtml=`<span class="summary-delta delta-up">↑ +${e.delta.toFixed(1)}kg</span>`;
+    else if(e.delta<0) deltaHtml=`<span class="summary-delta delta-down">↓ ${e.delta.toFixed(1)}kg</span>`;
+    else deltaHtml=`<span class="summary-delta delta-same">= estável</span>`;
+    const label=e.serie==='Geral'?e.exercicio.split('(')[0].trim():`${e.exercicio.split('(')[0].trim()} · ${e.serie}`;
+    return `<div class="summary-row"><span class="summary-ex">${label}</span>${deltaHtml}</div>`;
+  }).join('');
+
+  const html=`<div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+<div class="modal-box">
+  <div class="modal-title">🏁 Treino finalizado!</div>
+  <div class="summary-time">${time}</div>
+  <div style="font-size:0.75rem;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:0.8rem;">✓ cargas salvas automaticamente</div>
+  ${rows.length?`<div class="summary-grid">${rows}</div>`:'<div style="color:var(--muted);font-size:0.85rem;padding:1rem 0">Nenhuma carga registrada neste treino.</div>'}
+  <div class="modal-actions"><button class="modal-btn modal-btn-save" onclick="closeModal()">Fechar</button></div>
+</div></div>`;
+  document.getElementById('modal-root').innerHTML=html;
 }
 
 // ── RENDER ──────────────────────────────────────────────────────────────────
@@ -400,6 +714,7 @@ function render(){
       document.querySelectorAll('.workout-panel').forEach(p=>p.classList.remove('active'));
       tab.classList.add('active');
       document.getElementById('panel-'+treino.id).classList.add('active');
+      if(workoutActive) updateWorkoutProgress();
     };
     tabsEl.appendChild(tab);
 
@@ -461,21 +776,32 @@ function render(){
         ? `<button class="predio-chip" id="prediobtn-${ex.carga_key}" onclick="event.stopPropagation();togglePredio('${ex.carga_key}')">🏠 prédio</button>`
         : '';
 
-      const cardHtml=`<div class="exercise-card${mobClass}" id="${cardId}">
+      // For predio swap — store sub data as data attributes
+      const subDataAttrs = ex.sub ? `
+        data-sub-nome="${(ex.sub.nome||'').replace(/"/g,'&quot;')}"
+        data-sub-video="${ex.sub.video||''}"
+        data-sub-img="${ex.sub.img||''}"
+        data-orig-nome="${ex.nome.replace(/"/g,'&quot;')}"
+        data-orig-video="${ex.video||''}"
+        data-orig-img="${ex.img||''}"
+        data-orig-series="${seriesTag.replace(/"/g,'&quot;')}"` : '';
+
+      const cardHtml=`<div class="exercise-card${mobClass}" id="${cardId}" ${subDataAttrs}>
   <div class="exercise-header" onclick="toggleCard('${cardId}')">
+    <button class="ex-check" id="check-${ex.carga_key}" onclick="event.stopPropagation();toggleDone('${ex.carga_key}','${cardId}')"></button>
     <span class="ex-num">${ex.num}</span>
     <div class="ex-info">
-      <div class="ex-name">${ex.nome}</div>
-      <div class="ex-meta" id="${metaId}">${mobTagHtml}<span class="tag series">⟳ ${seriesTag}</span>${savedBadge}</div>
+      <div class="ex-name" id="name-${ex.carga_key}">${ex.nome}</div>
+      <div class="ex-meta" id="${metaId}">${mobTagHtml}<span class="tag series" id="series-tag-${ex.carga_key}">⟳ ${seriesTag}</span>${savedBadge}</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:5px;align-items:center;">${descansoTag}${predioChip}</div>
     </div>
     <span class="expand-icon">↓</span>
   </div>
   <div class="exercise-body">
-    ${imgHtml}
+    <div class="ex-image-wrap" id="img-wrap-${ex.carga_key}">${ex.img?`<img src="${ex.img}" alt="${ex.nome}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=ex-image-placeholder><span>📷</span>sem foto</div>'">`:`<div class="ex-image-placeholder"><span>📷</span>sem foto</div>`}</div>
     ${cargaHtml}
     <div class="body-buttons">
-      <a class="icon-btn yt" href="${ex.video}" target="_blank"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46A2.78 2.78 0 0 0 1.46 6.42 29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58 2.78 2.78 0 0 0 1.95 1.96C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.96-1.96A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z"/><polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02"/></svg>Ver no YouTube</a>
+      <a class="icon-btn yt" id="yt-btn-${ex.carga_key}" href="${ex.video}" target="_blank"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46A2.78 2.78 0 0 0 1.46 6.42 29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58 2.78 2.78 0 0 0 1.95 1.96C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.96-1.96A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z"/><polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02"/></svg>Ver no YouTube</a>
       <button class="icon-btn edit-btn" onclick="openEdit('${treino.id}',${ei})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Editar</button>
       <button class="icon-btn del-btn" onclick="confirmDelete('${treino.id}',${ei})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>Remover</button>
     </div>
