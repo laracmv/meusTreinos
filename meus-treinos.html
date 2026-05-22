@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meus Treinos</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f0f0f;--surface:#1a1a1a;--surface2:#222;--border:#2e2e2e;
+  --accent:#c8f135;--accent-dim:rgba(200,241,53,0.12);
+  --orange:#f4a336;--orange-dim:rgba(244,163,54,0.12);
+  --mob:#a78bfa;--mob-dim:rgba(167,139,250,0.12);--mob-border:rgba(167,139,250,0.3);
+  --text:#f0f0f0;--muted:#888;--tag-bg:#252525;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;padding:0 0 80px;}
+
+header{padding:2rem 1.5rem 1.2rem;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:100;display:flex;align-items:center;gap:8px;justify-content:space-between;flex-wrap:wrap;}
+.logo{font-family:'DM Mono',monospace;font-size:1rem;color:var(--accent);letter-spacing:-0.02em;}
+.header-right{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.hbtn{border-radius:40px;font-family:'DM Sans',sans-serif;font-weight:600;font-size:0.8rem;cursor:pointer;padding:7px 15px;transition:all 0.2s;white-space:nowrap;}
+.hbtn-outline{background:transparent;color:var(--muted);border:1px solid var(--border);}
+.hbtn-outline:hover{color:var(--text);border-color:#555;}
+.hbtn-outline.active{background:var(--orange-dim);color:var(--orange);border-color:rgba(244,163,54,0.35);}
+.hbtn-fill{background:var(--accent);color:#0f0f0f;border:none;}
+.hbtn-fill:hover{opacity:0.85;}
+
+.tabs{display:flex;padding:0 1.5rem;border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{padding:12px 18px;cursor:pointer;font-size:0.82rem;font-family:'DM Mono',monospace;color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap;transition:color 0.2s,border-color 0.2s;}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.tab:hover{color:var(--text);}
+
+.workout-panel{display:none;padding:1.2rem 1.5rem;}
+.workout-panel.active{display:block;}
+.workout-title{font-size:1.5rem;font-weight:600;margin-bottom:0.2rem;}
+.workout-subtitle{color:var(--muted);font-size:0.85rem;margin-bottom:1.2rem;}
+
+/* Card */
+.exercise-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:0;overflow:hidden;transition:border-color 0.2s;}
+.exercise-card.mobility{border-color:var(--mob-border);background:rgba(167,139,250,0.04);}
+.exercise-card:hover{border-color:#3e3e3e;}
+.exercise-card.mobility:hover{border-color:var(--mob);}
+.exercise-header{padding:.9rem 1.1rem;display:flex;align-items:flex-start;gap:.8rem;cursor:pointer;user-select:none;}
+.ex-num{font-family:'DM Mono',monospace;font-size:0.72rem;color:var(--muted);background:var(--tag-bg);padding:3px 7px;border-radius:4px;margin-top:2px;flex-shrink:0;}
+.mobility .ex-num{color:var(--mob);background:var(--mob-dim);}
+.ex-info{flex:1;min-width:0;}
+.ex-name{font-weight:500;font-size:0.92rem;line-height:1.3;margin-bottom:5px;}
+.ex-meta{display:flex;gap:7px;flex-wrap:wrap;align-items:center;}
+.tag{background:var(--tag-bg);border:1px solid var(--border);border-radius:20px;padding:3px 9px;font-size:0.72rem;color:var(--muted);font-family:'DM Mono',monospace;}
+.tag.series{color:var(--accent);border-color:rgba(200,241,53,0.25);background:var(--accent-dim);}
+.tag.mob-tag{color:var(--mob);border-color:var(--mob-border);background:var(--mob-dim);}
+.expand-icon{color:var(--muted);font-size:1.1rem;margin-top:2px;transition:transform 0.25s;flex-shrink:0;}
+.exercise-card.open .expand-icon{transform:rotate(180deg);}
+.exercise-body{display:none;padding:0 1.1rem 1.1rem;border-top:1px solid var(--border);}
+.exercise-card.open .exercise-body{display:block;}
+
+/* Image */
+.ex-image-wrap{margin:10px 0 12px;border-radius:8px;overflow:hidden;background:var(--surface2);height:160px;position:relative;}
+.ex-image-wrap img{width:100%;height:100%;object-fit:cover;display:block;}
+.ex-image-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:0.78rem;font-family:'DM Mono',monospace;flex-direction:column;gap:6px;}
+.ex-image-placeholder span{font-size:1.5rem;}
+
+/* Load */
+.load-row{display:flex;align-items:center;gap:10px;padding:10px 0 12px;}
+.load-label{font-size:0.78rem;color:var(--muted);min-width:55px;}
+.load-input{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Mono',monospace;font-size:.95rem;padding:7px 10px;width:85px;transition:border-color 0.2s;text-align:center;}
+.load-input:focus{outline:none;border-color:var(--accent);}
+.load-unit{font-size:0.78rem;color:var(--muted);}
+.series-loads{padding:10px 0 12px;}
+.series-loads-title{font-size:0.72rem;color:var(--muted);margin-bottom:8px;font-family:'DM Mono',monospace;}
+.series-grid{display:flex;flex-direction:column;gap:7px;}
+.series-row{display:flex;align-items:center;gap:9px;}
+.series-label{font-size:0.75rem;font-family:'DM Mono',monospace;color:var(--muted);min-width:64px;}
+.series-label .rep-range{display:block;font-size:0.66rem;color:#555;margin-top:1px;}
+.series-input{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Mono',monospace;font-size:0.88rem;padding:6px 9px;width:78px;transition:border-color 0.2s;text-align:center;}
+.series-input:focus{outline:none;border-color:var(--accent);}
+
+/* Buttons row */
+.body-buttons{display:flex;gap:7px;flex-wrap:wrap;margin-top:4px;}
+.icon-btn{display:inline-flex;align-items:center;gap:6px;background:transparent;border:1px solid var(--border);color:var(--text);font-size:0.78rem;font-family:'DM Sans',sans-serif;padding:6px 13px;border-radius:8px;text-decoration:none;cursor:pointer;transition:border-color 0.2s,color 0.2s;}
+.icon-btn.yt:hover{border-color:#e63946;color:#e63946;}
+.icon-btn.edit-btn:hover{border-color:var(--accent);color:var(--accent);}
+.icon-btn.del-btn:hover{border-color:#e63946;color:#e63946;}
+.icon-btn svg{width:13px;height:13px;flex-shrink:0;}
+
+/* Sub section */
+.sub-section{margin-top:10px;border-top:1px dashed var(--border);padding-top:10px;display:none;}
+.sub-section.visible{display:block;}
+.sub-label{font-size:0.7rem;font-family:'DM Mono',monospace;color:var(--orange);margin-bottom:5px;}
+.sub-name{font-size:0.86rem;font-weight:500;color:var(--text);margin-bottom:3px;}
+.sub-tip{font-size:0.76rem;color:var(--muted);line-height:1.5;}
+
+/* Rest */
+.rest-wrap{padding:6px 0;}
+.rest-block{display:flex;align-items:center;gap:0;}
+.rest-line{flex:1;height:1px;background:var(--border);}
+.rest-pill{font-size:0.68rem;font-family:'DM Mono',monospace;color:var(--muted);background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:3px 11px;white-space:nowrap;}
+
+/* Biset */
+.biset-label{font-size:0.68rem;font-family:'DM Mono',monospace;color:var(--orange);background:var(--orange-dim);border:1px solid rgba(244,163,54,0.3);border-radius:4px 4px 0 0;padding:3px 11px;display:inline-block;margin-left:18px;}
+.biset-connector{display:flex;align-items:stretch;gap:0;margin:0;}
+.biset-bar{width:3px;background:var(--orange);flex-shrink:0;margin-left:18px;}
+.biset-card-wrap{flex:1;}
+.biset-rest{font-size:0.68rem;font-family:'DM Mono',monospace;color:var(--orange);padding:4px 0 4px 26px;}
+
+/* Add exercise button */
+.add-ex-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px;border:1px dashed var(--border);border-radius:12px;background:transparent;color:var(--muted);font-size:0.82rem;font-family:'DM Sans',sans-serif;cursor:pointer;margin-top:12px;transition:all 0.2s;}
+.add-ex-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:500;display:flex;align-items:center;justify-content:center;padding:1rem;}
+.modal-box{background:#1e1e1e;border:1px solid var(--border);border-radius:16px;width:100%;max-width:480px;padding:1.5rem;max-height:90vh;overflow-y:auto;}
+.modal-title{font-size:1rem;font-weight:600;margin-bottom:1.2rem;}
+.form-group{margin-bottom:1rem;}
+.form-label{font-size:0.75rem;color:var(--muted);font-family:'DM Mono',monospace;display:block;margin-bottom:5px;}
+.form-input,.form-select,.form-textarea{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.9rem;padding:9px 12px;transition:border-color 0.2s;}
+.form-input:focus,.form-select:focus,.form-textarea:focus{outline:none;border-color:var(--accent);}
+.form-select{appearance:none;}
+.form-textarea{resize:vertical;min-height:60px;}
+.form-check{display:flex;align-items:center;gap:8px;font-size:0.85rem;color:var(--muted);cursor:pointer;}
+.form-check input{width:16px;height:16px;accent-color:var(--accent);}
+.series-edit-grid{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+.series-edit-row{display:flex;gap:8px;align-items:center;}
+.series-edit-row input{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Mono',monospace;font-size:0.82rem;padding:6px 9px;}
+.series-edit-row input:focus{outline:none;border-color:var(--accent);}
+.series-edit-row button{background:transparent;border:1px solid var(--border);color:#e63946;border-radius:6px;padding:5px 9px;cursor:pointer;font-size:0.8rem;}
+.add-series-btn{background:transparent;border:1px dashed var(--border);color:var(--muted);border-radius:6px;padding:6px 12px;font-size:0.78rem;cursor:pointer;width:100%;margin-top:4px;transition:all 0.2s;}
+.add-series-btn:hover{border-color:var(--accent);color:var(--accent);}
+.modal-actions{display:flex;gap:8px;margin-top:1.2rem;justify-content:flex-end;}
+.modal-btn{padding:9px 20px;border-radius:8px;font-family:'DM Sans',sans-serif;font-weight:600;font-size:0.85rem;cursor:pointer;transition:all 0.2s;}
+.modal-btn-cancel{background:transparent;border:1px solid var(--border);color:var(--muted);}
+.modal-btn-cancel:hover{color:var(--text);}
+.modal-btn-save{background:var(--accent);border:none;color:#0f0f0f;}
+.modal-btn-save:hover{opacity:0.85;}
+.modal-btn-danger{background:transparent;border:1px solid #e63946;color:#e63946;margin-right:auto;}
+.modal-btn-danger:hover{background:rgba(230,57,70,0.1);}
+
+.saved-notice{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--accent);color:#0f0f0f;font-weight:600;font-size:0.82rem;padding:9px 22px;border-radius:40px;opacity:0;transition:opacity 0.3s;pointer-events:none;z-index:999;}
+.saved-notice.show{opacity:1;}
+
+/* Progress tab */
+.prog-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:1.2rem;}
+.prog-title{font-size:1.5rem;font-weight:600;}
+.prog-sync-info{font-size:0.75rem;color:var(--muted);font-family:'DM Mono',monospace;}
+.prog-sync-info span{color:var(--accent);}
+.prog-filter{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1.5rem;align-items:center;}
+.prog-filter-label{font-size:0.75rem;color:var(--muted);font-family:'DM Mono',monospace;}
+.filter-select{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.82rem;padding:7px 12px;cursor:pointer;}
+.filter-select:focus{outline:none;border-color:var(--accent);}
+.prog-empty{text-align:center;padding:3rem 1rem;color:var(--muted);font-size:0.9rem;line-height:1.8;}
+.prog-empty strong{display:block;font-size:1.1rem;color:var(--text);margin-bottom:8px;}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.1rem;margin-bottom:14px;}
+.chart-card-title{font-size:0.82rem;font-weight:500;color:var(--text);margin-bottom:4px;}
+.chart-card-sub{font-size:0.7rem;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:12px;}
+.chart-wrap{position:relative;height:180px;}
+.prog-stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:1.5rem;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.9rem;}
+.stat-label{font-size:0.7rem;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:4px;}
+.stat-value{font-size:1.4rem;font-weight:600;color:var(--accent);}
+.stat-sub{font-size:0.7rem;color:var(--muted);margin-top:2px;}
+.prog-loading{text-align:center;padding:2rem;color:var(--muted);font-size:0.85rem;font-family:'DM Mono',monospace;}
+.prog-section-title{font-size:0.72rem;color:var(--muted);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.06em;margin:1.5rem 0 0.8rem;}
+.sync-btn{display:inline-flex;align-items:center;gap:6px;background:transparent;border:1px solid var(--border);color:var(--muted);font-size:0.78rem;font-family:'DM Sans',sans-serif;padding:6px 14px;border-radius:8px;cursor:pointer;transition:all 0.2s;}
+.sync-btn:hover{border-color:var(--accent);color:var(--accent);}
+.sync-btn.syncing{border-color:var(--accent);color:var(--accent);opacity:0.7;}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">// meus treinos</div>
+  <div class="header-right">
+    <button class="hbtn hbtn-outline" id="modeBtn" onclick="toggleMode()">🏠 Prédio</button>
+    <button class="hbtn hbtn-fill" onclick="saveAll()">Salvar cargas</button>
+  </div>
+</header>
+<div class="tabs" id="tabs"></div>
+<div id="panels"></div>
+<div id="modal-root"></div>
+<div class="saved-notice" id="saved-notice">✓ Salvo!</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+const SCRIPT_URL='https://script.google.com/macros/s/AKfycbx07M6zoHa89YOEK9tBbiaCj7z1zE7NWl8-u0ybXCZ_bJZEjCFHZS1R4ILLwVe0_RHk8g/exec';
+
+let predioMode=false;
+let editingTreino=null, editingIndex=null;
+let progCharts={};
+
+// ── DATA ────────────────────────────────────────────────────────────────────
+const defaultTreinos=[
+  {
+    id:'A',nome:'Treino A',descricao:'Mobilidade + Quadríceps / Parte anterior da perna',
+    exercicios:[
+      {num:'01',nome:'Mobilidade Torácica (Gato-Vaca)',series:'2 x 10',carga_key:'A01',mobility:true,video:'https://www.youtube.com/results?search_query=mobilidade+tor%C3%A1cica+cat+cow',img:'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&q=80',descanso:'0:30',descanso_label:'descanso após mobilidade'},
+      {num:'02',nome:'Mobilidade de Quadril 90-90°',series:'2 x 10',carga_key:'A02',mobility:true,video:'https://www.youtube.com/results?search_query=mobilidade+quadril+90-90',img:'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=600&q=80',descanso:'0:30',descanso_label:'descanso após mobilidade'},
+      {num:'03',nome:'Abdução em Deslocamento com Miniband (Joelhos)',series:'3 x 12 cada lado',carga_key:'A03',video:'https://www.youtube.com/results?search_query=abdu%C3%A7%C3%A3o+miniband+joelhos',img:'https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=600&q=80',descanso:'1:00'},
+      {num:'04',nome:'Agachamento com Miniband nos Joelhos',series:'3 x 10',carga_key:'A04',video:'https://www.youtube.com/results?search_query=agachamento+miniband+joelhos',img:'https://images.unsplash.com/photo-1566241142559-40e1dab266c6?w=600&q=80',descanso:'1:00'},
+      {num:'05',nome:'Hack Squat (Agachamento na Máquina Inclinada)',carga_key:'A05',video:'https://www.youtube.com/results?search_query=hack+squat+m%C3%A1quina',img:'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=600&q=80',descanso:'1:00',series_cargas:[{label:'Série 1',reps:'12 reps'},{label:'Série 2',reps:'10 a 12 reps'},{label:'Série 3',reps:'8 a 10 reps'},{label:'Série 4',reps:'8 a 10 reps'}],sub:{nome:'Agachamento Livre na Gaiola',dica:'Use a gaiola do prédio. Mesma progressão de carga — comece mais leve para calibrar.',video:'https://www.youtube.com/results?search_query=agachamento+livre+gaiola'}},
+      {num:'06',nome:'Leg Press',carga_key:'A06',video:'https://www.youtube.com/results?search_query=leg+press+como+fazer',img:'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600&q=80',descanso:'1:00',series_cargas:[{label:'Série 1',reps:'10 a 12 reps'},{label:'Série 2',reps:'10 a 12 reps'},{label:'Série 3',reps:'8 a 10 reps'}],sub:{nome:'Agachamento Goblet com Halter',dica:'Segure um halter pesado na vertical na frente do peito. Mantém tronco ereto, parecido com o Leg Press.',video:'https://www.youtube.com/results?search_query=agachamento+goblet+halter'}},
+      {num:'07',nome:'Avanço com Halteres (Afundo)',series:'3 x 10 cada lado',carga_key:'A07',video:'https://www.youtube.com/results?search_query=afundo+halter',img:'https://images.unsplash.com/photo-1597452485669-2c7bb5fef90d?w=600&q=80',descanso:'1:00',sub:{nome:'Avanço com Halteres (mesmo exercício)',dica:'Já usa halteres — funciona igual no prédio.',video:'https://www.youtube.com/results?search_query=afundo+halter'}},
+      {num:'08',nome:'Cadeira Extensora',series:'3 x 10a12',carga_key:'A08',video:'https://www.youtube.com/results?search_query=cadeira+extensora',img:'https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?w=600&q=80',sub:{nome:'Agachamento Unilateral Assistido (Pistol Squat)',dica:'Segure uma coluna ou parede levemente. Desce em uma perna só, controlado.',video:'https://www.youtube.com/results?search_query=pistol+squat+assistido'}},
+    ]
+  },
+  {
+    id:'B',nome:'Treino B',descricao:'Peito + Ombro + Tríceps',
+    exercicios:[
+      {num:'01',nome:'Supino Inclinado Aberto (Chest Incline Aberto)',carga_key:'B01',video:'https://www.youtube.com/results?search_query=supino+inclinado+m%C3%A1quina',img:'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=600&q=80',descanso:'1:00',series_cargas:[{label:'Série 1',reps:'10 reps'},{label:'Série 2',reps:'10 a 12 reps'},{label:'Série 3',reps:'10 a 12 reps'}],sub:{nome:'Supino Inclinado na Máquina do Prédio',dica:'A máquina de supino do prédio substitui diretamente.',video:'https://www.youtube.com/results?search_query=supino+inclinado+m%C3%A1quina'}},
+      {num:'02',nome:'Desenvolvimento com Halteres (Dumbbell Press)',series:'3 x 10a12',carga_key:'B02',video:'https://www.youtube.com/results?search_query=desenvolvimento+halter+press',img:'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=600&q=80',descanso:'1:00',sub:{nome:'Desenvolvimento com Halteres no Banco (mesmo exercício)',dica:'Já usa halteres — funciona igual no prédio com o banco.',video:'https://www.youtube.com/results?search_query=desenvolvimento+halter+banco'}},
+      {num:'03',nome:'Desenvolvimento Arnold com Halteres',series:'3 x 10a12',carga_key:'B03',video:'https://www.youtube.com/results?search_query=desenvolvimento+arnold+halter',img:'https://images.unsplash.com/photo-1590487988256-9ed24133863e?w=600&q=80',descanso:'1:00',sub:{nome:'Desenvolvimento Arnold (mesmo exercício)',dica:'Já usa halteres — funciona igual no prédio. Pode sentar no banco.',video:'https://www.youtube.com/results?search_query=desenvolvimento+arnold+halter'}},
+      {num:'04',nome:'Tríceps Pulley na Corda',series:'3 x 10a12',carga_key:'B04',video:'https://www.youtube.com/results?search_query=tr%C3%ADceps+pulley+corda',img:'https://images.unsplash.com/photo-1583454155184-870a1f63aebc?w=600&q=80',descanso:'1:00',sub:{nome:'Tríceps Testa com Halter (Skull Crusher)',dica:'Deite no banco, desça os halteres controlado até a testa.',video:'https://www.youtube.com/results?search_query=tr%C3%ADceps+testa+halter'}},
+      {num:'05',nome:'Paloff Press (Antirotação no Cabo)',series:'3 x 8a10',carga_key:'B05',video:'https://www.youtube.com/results?search_query=paloff+press+core',img:'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=600&q=80',descanso:'1:00',sub:{nome:'Prancha com Apoio Assimétrico',dica:'Em prancha, segure um halter leve do lado. Segure a posição sem rotacionar o quadril. 30–40 seg cada lado.',video:'https://www.youtube.com/results?search_query=prancha+antirota%C3%A7%C3%A3o'}},
+      {num:'06',nome:'Prancha Isométrica c/ Toque nos Ombros',series:'3 x 30 a 45 seg',carga_key:'B06',video:'https://www.youtube.com/results?search_query=prancha+toque+ombro',img:'https://images.unsplash.com/photo-1566241142559-40e1dab266c6?w=600&q=80',sub:{nome:'Prancha Isométrica c/ Toque nos Ombros (mesmo exercício)',dica:'Exercício de peso corporal — funciona igual em qualquer lugar.',video:'https://www.youtube.com/results?search_query=prancha+toque+ombro'}},
+    ]
+  },
+  {
+    id:'C',nome:'Treino C',descricao:'Mobilidade + Posterior da Perna / Glúteos',
+    exercicios:[
+      {num:'01',nome:'FMS – Flexão e Extensão do Quadril c/ Apoio 90°',series:'2 x 12 cada lado',carga_key:'C01',mobility:true,video:'https://www.youtube.com/results?search_query=FMS+mobilidade+quadril',img:'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=600&q=80',descanso:'0:30',descanso_label:'descanso após mobilidade'},
+      {num:'02',nome:'Mobilidade de Quadril – Escorpião',series:'2 x 10 cada lado',carga_key:'C02',mobility:true,video:'https://www.youtube.com/results?search_query=mobilidade+quadril+escorpi%C3%A3o',img:'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&q=80',descanso:'0:30',descanso_label:'descanso após mobilidade'},
+      {num:'03',nome:'Elevação Pélvica na Máquina (Hip Thrust Máquina)',series:'3 x 10a12',carga_key:'C03',video:'https://www.youtube.com/results?search_query=hip+thrust+m%C3%A1quina',img:'https://images.unsplash.com/photo-1607962837359-5e7e89f86776?w=600&q=80',descanso:'1:00',sub:{nome:'Hip Thrust com Halter no Banco',dica:'Apoie as escápulas no banco, coloque um halter pesado no quadril.',video:'https://www.youtube.com/results?search_query=hip+thrust+halter+banco'}},
+      {num:'04',nome:'Mesa Flexora Deitada (Lying Leg Curl)',carga_key:'C04',video:'https://www.youtube.com/results?search_query=mesa+flexora+deitada',img:'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600&q=80',descanso:'1:00',series_cargas:[{label:'Série 1',reps:'12 reps'},{label:'Série 2',reps:'10 a 12 reps'},{label:'Série 3',reps:'10 a 12 reps'},{label:'Série 4',reps:'8 a 10 reps'}],sub:{nome:'Stiff com Halteres (Romanian Deadlift)',dica:'Halteres na frente das coxas, desça com joelhos levemente dobrados, costas retas.',video:'https://www.youtube.com/results?search_query=stiff+halteres+romanian+deadlift'}},
+      {num:'05',nome:'Stiff com Halter Unipodal (Romanian Deadlift Unipodal)',series:'3 x 8a10 cada lado',carga_key:'C05',video:'https://www.youtube.com/results?search_query=stiff+halter+unipodal',img:'https://images.unsplash.com/photo-1597452485669-2c7bb5fef90d?w=600&q=80',descanso:'1:00',sub:{nome:'Stiff com Halter Unipodal (mesmo exercício)',dica:'Já usa halteres — funciona igual no prédio.',video:'https://www.youtube.com/results?search_query=stiff+halter+unipodal'}},
+      {num:'06',nome:'Mesa Flexora em Pé Alternada (Hammer Leg Curl Alternado)',series:'3 x 10',carga_key:'C06',video:'https://www.youtube.com/results?search_query=mesa+flexora+em+p%C3%A9+alternada',img:'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=600&q=80',biset_com_proximo:true,sub:{nome:'Flexão de Joelho com Halter no Banco',dica:'Deite de bruços no banco, prenda um halter leve entre os pés e faça a flexão controlada.',video:'https://www.youtube.com/results?search_query=mesa+flexora+improvisada+halter'}},
+      {num:'07',nome:'Mesa Flexora em Pé Bilateral (Hammer Leg Curl)',series:'3 x 10',carga_key:'C07',video:'https://www.youtube.com/results?search_query=mesa+flexora+em+p%C3%A9',img:'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=600&q=80',descanso:'1:00',sub:{nome:'Flexão de Joelho Bilateral com Halter no Banco',dica:'Mesma adaptação do exercício anterior, mas com as duas pernas ao mesmo tempo.',video:'https://www.youtube.com/results?search_query=mesa+flexora+improvisada+halter+bilateral'}},
+      {num:'08',nome:'Panturrilha em Pé (Standing Calf Raise)',series:'3 x 12a15',carga_key:'C08',video:'https://www.youtube.com/results?search_query=panturrilha+em+p%C3%A9',img:'https://images.unsplash.com/photo-1520334363697-32060e71a10f?w=600&q=80',sub:{nome:'Panturrilha no Degrau com Halter',dica:'Fique na ponta do degrau, segure um halter para carga extra.',video:'https://www.youtube.com/results?search_query=panturrilha+degrau+halter'}},
+    ]
+  },
+  {
+    id:'D',nome:'Treino D',descricao:'Costas + Bíceps + Core',
+    exercicios:[
+      {num:'01',nome:'Puxada na Frente Pegada Aberta Pronada (Lat Machine / PullDown)',carga_key:'D01',video:'https://www.youtube.com/results?search_query=puxada+na+frente+lat+machine',img:'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=600&q=80',descanso:'1:00',series_cargas:[{label:'Série 1',reps:'10 reps'},{label:'Série 2',reps:'10 a 12 reps'},{label:'Série 3',reps:'10 a 12 reps'}],sub:{nome:'Puxada na Máquina Articulada do Prédio',dica:'A máquina articulada do prédio substitui diretamente. Use pegada aberta pronada.',video:'https://www.youtube.com/results?search_query=puxada+m%C3%A1quina+articulada'}},
+      {num:'02',nome:'Puxada Alta Alternada no Cabo (Functional Training)',series:'3 x 10a12',carga_key:'D02',video:'https://www.youtube.com/results?search_query=puxada+alta+alternada+cabo',img:'https://images.unsplash.com/photo-1583454155184-870a1f63aebc?w=600&q=80',descanso:'1:00',sub:{nome:'Remada Curvada com Halter Unilateral',dica:'Apoie uma mão e joelho no banco. Puxe o halter com a outra mão, cotovelo para cima.',video:'https://www.youtube.com/results?search_query=remada+curvada+unilateral+halter'}},
+      {num:'03',nome:'Remada Aberta Pronada Simultânea (Dual Cable Row)',series:'3 x 10a12',carga_key:'D03',video:'https://www.youtube.com/results?search_query=remada+aberta+cabo+duplo',img:'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=600&q=80',descanso:'1:00',sub:{nome:'Remada Curvada com Dois Halteres',dica:'Em pé, quadril para trás, costas retas. Puxe os dois halteres com cotovelos afastados (pegada aberta).',video:'https://www.youtube.com/results?search_query=remada+curvada+dois+halteres'}},
+      {num:'04',nome:'Remada Triângulo no Pulley Baixo',series:'3 x 10a12',carga_key:'D04',video:'https://www.youtube.com/results?search_query=remada+tri%C3%A2ngulo+pulley',img:'https://images.unsplash.com/photo-1590487988256-9ed24133863e?w=600&q=80',descanso:'1:00',sub:{nome:'Remada Curvada com Halter Pegada Neutra',dica:'Em pé ou apoiado no banco, segure o halter com palma para dentro. Simula o triângulo do pulley.',video:'https://www.youtube.com/results?search_query=remada+curvada+pegada+neutra'}},
+      {num:'05',nome:'Rosca Scott na Máquina',series:'3 x 10a12',carga_key:'D05',video:'https://www.youtube.com/results?search_query=rosca+scott+m%C3%A1quina',img:'https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?w=600&q=80',descanso:'1:00',sub:{nome:'Rosca Direta com Halteres no Banco Inclinado',dica:'Sente no banco inclinado, braços pendurados. A inclinação isola o bíceps de forma parecida com a Scott.',video:'https://www.youtube.com/results?search_query=rosca+banco+inclinado+halter'}},
+      {num:'06',nome:'Oblíquo Alternado (Rotação de Tronco)',series:'3 x 8a10',carga_key:'D06',video:'https://www.youtube.com/results?search_query=obl%C3%ADquo+rota%C3%A7%C3%A3o+tronco',img:'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=600&q=80',descanso:'1:00',sub:{nome:'Russian Twist com Halter',dica:'Sentado no chão, pés levantados, gire o tronco lado a lado com um halter.',video:'https://www.youtube.com/results?search_query=russian+twist+halter'}},
+      {num:'07',nome:'Hiperextensão no Solo Isométrico',series:'3 x 30 a 45 seg',carga_key:'D07',video:'https://www.youtube.com/results?search_query=hiperextens%C3%A3o+solo+isom%C3%A9trico',img:'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=600&q=80',sub:{nome:'Hiperextensão no Solo Isométrico (mesmo exercício)',dica:'Exercício de peso corporal — funciona igual em qualquer lugar.',video:'https://www.youtube.com/results?search_query=hiperextens%C3%A3o+solo'}},
+    ]
+  }
+];
+
+// ── STATE ───────────────────────────────────────────────────────────────────
+function loadTreinos(){
+  try{const s=localStorage.getItem('treino_data');return s?JSON.parse(s):JSON.parse(JSON.stringify(defaultTreinos));}
+  catch{return JSON.parse(JSON.stringify(defaultTreinos));}
+}
+function saveTreinos(t){localStorage.setItem('treino_data',JSON.stringify(t));}
+function loadCargas(){try{return JSON.parse(localStorage.getItem('treino_cargas')||'{}');}catch{return {};}}
+
+let treinos=loadTreinos();
+let saved=loadCargas();
+
+// ── HELPERS ─────────────────────────────────────────────────────────────────
+function nextKey(treinoId){
+  const t=treinos.find(t=>t.id===treinoId);
+  const keys=t.exercicios.map(e=>e.carga_key).filter(k=>k.startsWith(treinoId));
+  for(let i=1;i<100;i++){const k=treinoId+String(i).padStart(2,'0');if(!keys.includes(k))return k;}
+}
+function nextNum(treinoId){
+  const t=treinos.find(t=>t.id===treinoId);
+  return String(t.exercicios.length+1).padStart(2,'0');
+}
+function renumberExercises(exArr){
+  exArr.forEach((e,i)=>e.num=String(i+1).padStart(2,'0'));
+}
+
+function saveAll(){
+  const c={};
+  document.querySelectorAll('.load-input,.series-input').forEach(inp=>{if(inp.value)c[inp.dataset.key]=inp.value;});
+  localStorage.setItem('treino_cargas',JSON.stringify(c));
+  saved=c;
+
+  // Build entries for Sheets — one row per exercise/series
+  const activeTab=document.querySelector('.tab.active');
+  const treinoNome=activeTab?activeTab.textContent:'';
+  const entradas=[];
+  const hoje=new Date().toLocaleDateString('pt-BR');
+
+  treinos.forEach(treino=>{
+    treino.exercicios.forEach(ex=>{
+      if(ex.series_cargas){
+        ex.series_cargas.forEach((s,si)=>{
+          const key=ex.carga_key+'_s'+si;
+          if(c[key]) entradas.push({exercicio:ex.nome,serie:s.label,carga:parseFloat(c[key]),key});
+        });
+      } else {
+        if(c[ex.carga_key]) entradas.push({exercicio:ex.nome,serie:'Geral',carga:parseFloat(c[ex.carga_key]),key:ex.carga_key});
+      }
+    });
+  });
+
+  if(entradas.length>0){
+    const syncBtn=document.getElementById('sync-status');
+    if(syncBtn){syncBtn.textContent='⟳ sincronizando...';syncBtn.classList.add('syncing');}
+    fetch(SCRIPT_URL,{
+      method:'POST',
+      body:JSON.stringify({data:hoje,treino:treinoNome,entradas}),
+    }).then(r=>r.json()).then(()=>{
+      const ts=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+      localStorage.setItem('last_sync',ts);
+      if(syncBtn){syncBtn.textContent='✓ sincronizado às '+ts;syncBtn.classList.remove('syncing');}
+    }).catch(()=>{
+      if(syncBtn){syncBtn.textContent='⚠ erro ao sincronizar';syncBtn.classList.remove('syncing');}
+    });
+  }
+
+  const n=document.getElementById('saved-notice');
+  n.classList.add('show');setTimeout(()=>n.classList.remove('show'),2000);
+}
+
+function toggleMode(){
+  predioMode=!predioMode;
+  const btn=document.getElementById('modeBtn');
+  btn.textContent=predioMode?'🏋 Academia':'🏠 Prédio';
+  btn.classList.toggle('active',predioMode);
+  document.querySelectorAll('.sub-section').forEach(el=>el.classList.toggle('visible',predioMode));
+}
+function toggleCard(id){document.getElementById(id).classList.toggle('open');}
+
+// ── RENDER ──────────────────────────────────────────────────────────────────
+function render(){
+  const tabsEl=document.getElementById('tabs');
+  const panelsEl=document.getElementById('panels');
+  const activeTab=tabsEl.querySelector('.tab.active');
+  const activePanelId=activeTab?activeTab.dataset.id:treinos[0].id;
+
+  tabsEl.innerHTML='';
+  panelsEl.innerHTML='';
+
+  treinos.forEach(treino=>{
+    const isActive=treino.id===activePanelId;
+    const tab=document.createElement('div');
+    tab.className='tab'+(isActive?' active':'');
+    tab.dataset.id=treino.id;
+    tab.textContent=treino.nome;
+    tab.onclick=()=>{
+      document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+      document.querySelectorAll('.workout-panel').forEach(p=>p.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('panel-'+treino.id).classList.add('active');
+    };
+    tabsEl.appendChild(tab);
+
+    const panel=document.createElement('div');
+    panel.className='workout-panel'+(isActive?' active':'');
+    panel.id='panel-'+treino.id;
+
+    let html=`<div class="workout-title">${treino.nome}</div><div class="workout-subtitle">${treino.descricao}</div>`;
+
+    treino.exercicios.forEach((ex,ei)=>{
+      const isMulti=!!ex.series_cargas;
+      const cardId='card-'+ex.carga_key;
+      const metaId='meta-'+ex.carga_key;
+      const seriesTag=isMulti?ex.series_cargas.map(s=>s.reps).join(' / '):ex.series||'';
+      const mobClass=ex.mobility?' mobility':'';
+      const mobTagHtml=ex.mobility?`<span class="tag mob-tag">mobilidade</span>`:'';
+
+      let savedBadge='';
+      if(isMulti){
+        const vals=ex.series_cargas.map((s,si)=>saved[ex.carga_key+'_s'+si]||'').filter(Boolean);
+        if(vals.length)savedBadge=`<span class="tag">🏋 ${vals.join('→')} kg</span>`;
+      } else {
+        const v=saved[ex.carga_key]||'';
+        if(v)savedBadge=`<span class="tag">🏋 ${v} kg</span>`;
+      }
+
+      const imgHtml=ex.img
+        ?`<div class="ex-image-wrap"><img src="${ex.img}" alt="${ex.nome}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=ex-image-placeholder><span>📷</span>sem foto</div>'"></div>`
+        :`<div class="ex-image-wrap"><div class="ex-image-placeholder"><span>📷</span>sem foto</div></div>`;
+
+      let cargaHtml='';
+      if(isMulti){
+        const rows=ex.series_cargas.map((s,si)=>{
+          const key=ex.carga_key+'_s'+si;
+          const val=saved[key]||'';
+          return `<div class="series-row"><span class="series-label">${s.label}<span class="rep-range">${s.reps}</span></span><input class="series-input" type="number" min="0" step="0.5" placeholder="0" data-key="${key}" value="${val}" oninput="updateMultiTag('${ex.carga_key}',${ex.series_cargas.length})"><span class="load-unit">kg</span></div>`;
+        }).join('');
+        cargaHtml=`<div class="series-loads"><div class="series-loads-title">carga por série</div><div class="series-grid">${rows}</div></div>`;
+      } else {
+        const val=saved[ex.carga_key]||'';
+        cargaHtml=`<div class="load-row"><span class="load-label">Carga:</span><input class="load-input" type="number" min="0" step="0.5" placeholder="0" data-key="${ex.carga_key}" value="${val}" oninput="updateTag(this)"><span class="load-unit">kg</span></div>`;
+      }
+
+      let subHtml='';
+      if(ex.sub){
+        subHtml=`<div class="sub-section${predioMode?' visible':''}">
+  <div class="sub-label">🏠 substituição para o prédio</div>
+  <div class="sub-name">${ex.sub.nome}</div>
+  <div class="sub-tip">${ex.sub.dica}</div>
+  <div style="margin-top:8px;"><a class="icon-btn yt" href="${ex.sub.video}" target="_blank"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46A2.78 2.78 0 0 0 1.46 6.42 29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58 2.78 2.78 0 0 0 1.95 1.96C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.96-1.96A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z"/><polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02"/></svg>Ver substituição</a></div>
+</div>`;
+      }
+
+      const cardHtml=`<div class="exercise-card${mobClass}" id="${cardId}">
+  <div class="exercise-header" onclick="toggleCard('${cardId}')">
+    <span class="ex-num">${ex.num}</span>
+    <div class="ex-info">
+      <div class="ex-name">${ex.nome}</div>
+      <div class="ex-meta" id="${metaId}">${mobTagHtml}<span class="tag series">⟳ ${seriesTag}</span>${savedBadge}</div>
+    </div>
+    <span class="expand-icon">↓</span>
+  </div>
+  <div class="exercise-body">
+    ${imgHtml}
+    ${cargaHtml}
+    <div class="body-buttons">
+      <a class="icon-btn yt" href="${ex.video}" target="_blank"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46A2.78 2.78 0 0 0 1.46 6.42 29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58 2.78 2.78 0 0 0 1.95 1.96C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.96-1.96A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z"/><polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02"/></svg>Ver no YouTube</a>
+      <button class="icon-btn edit-btn" onclick="openEdit('${treino.id}',${ei})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Editar</button>
+      <button class="icon-btn del-btn" onclick="confirmDelete('${treino.id}',${ei})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>Remover</button>
+    </div>
+    ${subHtml}
+  </div>
+</div>`;
+
+      if(ex.biset_com_proximo){
+        html+=`<div class="biset-label">bi-set — faça os dois em sequência</div><div class="biset-connector"><div class="biset-bar"></div><div class="biset-card-wrap">${cardHtml}`;
+      } else if(ei>0&&treino.exercicios[ei-1]&&treino.exercicios[ei-1].biset_com_proximo){
+        html+=cardHtml+`</div></div><div class="biset-rest">descanso 1:00 após o bi-set</div>`;
+      } else {
+        html+=cardHtml;
+        if(ei<treino.exercicios.length-1){
+          const desc=ex.descanso||'1:00';
+          const lbl=ex.descanso_label||`descanso após exercício ${ex.num}`;
+          html+=`<div class="rest-wrap"><div class="rest-block"><div class="rest-line"></div><div class="rest-pill">⏱ ${lbl} — ${desc}</div><div class="rest-line"></div></div></div>`;
+        }
+      }
+    });
+
+    html+=`<button class="add-ex-btn" onclick="openAdd('${treino.id}')">+ adicionar exercício</button>`;
+    panel.innerHTML=html;
+    panelsEl.appendChild(panel);
+  });
+
+  // Progress tab
+  const progTabActive = activePanelId==='prog';
+  const progTab=document.createElement('div');
+  progTab.className='tab'+(progTabActive?' active':'');
+  progTab.dataset.id='prog';
+  progTab.textContent='📈 Progresso';
+  progTab.onclick=()=>{
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.workout-panel').forEach(p=>p.classList.remove('active'));
+    progTab.classList.add('active');
+    document.getElementById('panel-prog').classList.add('active');
+    renderProgress();
+  };
+  tabsEl.appendChild(progTab);
+
+  const lastSync=localStorage.getItem('last_sync')||'nunca';
+  const progPanel=document.createElement('div');
+  progPanel.className='workout-panel'+(progTabActive?' active':'');
+  progPanel.id='panel-prog';
+  progPanel.innerHTML=`
+<div class="prog-header">
+  <div class="prog-title">Progresso</div>
+  <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+    <button class="sync-btn" id="sync-btn" onclick="fetchAndRenderProgress()">⟳ atualizar do Sheets</button>
+    <div class="prog-sync-info" id="sync-status">última sincronização: <span>${lastSync}</span></div>
+  </div>
+</div>
+<div class="prog-filter">
+  <span class="prog-filter-label">exercício:</span>
+  <select class="filter-select" id="prog-ex-select" onchange="renderProgress()">
+    <option value="">todos</option>
+  </select>
+  <select class="filter-select" id="prog-period-select" onchange="renderProgress()">
+    <option value="30">últimos 30 dias</option>
+    <option value="60">últimos 60 dias</option>
+    <option value="90">últimos 90 dias</option>
+    <option value="0">tudo</option>
+  </select>
+</div>
+<div id="prog-content"><div class="prog-empty"><strong>Sem dados ainda</strong>Salve suas cargas durante o treino e elas aparecerão aqui.<br>Clique em "atualizar do Sheets" para buscar o histórico.</div></div>`;
+  panelsEl.appendChild(progPanel);
+}
+
+// ── PROGRESS ────────────────────────────────────────────────────────────────
+let sheetsData=[];
+
+function fetchAndRenderProgress(){
+  const btn=document.getElementById('sync-btn');
+  if(btn){btn.textContent='⟳ buscando...';btn.classList.add('syncing');}
+  const url=SCRIPT_URL+'?t='+Date.now();
+  fetch(url).then(r=>r.json()).then(res=>{
+    // rows: [data, treino, exercicio, serie, carga, key]
+    sheetsData=(res.rows||[]).slice(1).map(r=>({
+      data:r[0],treino:r[1],exercicio:r[2],serie:r[3],carga:parseFloat(r[4])||0,key:r[5]
+    }));
+    localStorage.setItem('sheets_cache',JSON.stringify(sheetsData));
+    const ts=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    localStorage.setItem('last_sync',ts);
+    const statusEl=document.getElementById('sync-status');
+    if(statusEl)statusEl.innerHTML=`última sincronização: <span>${ts}</span>`;
+    if(btn){btn.textContent='⟳ atualizar do Sheets';btn.classList.remove('syncing');}
+    renderProgress();
+  }).catch(err=>{
+    if(btn){btn.textContent='⚠ erro — tente novamente';btn.classList.remove('syncing');}
+    console.error(err);
+  });
+}
+
+function renderProgress(){
+  // Load from cache if sheetsData empty
+  if(!sheetsData.length){
+    try{const c=localStorage.getItem('sheets_cache');if(c)sheetsData=JSON.parse(c);}catch{}
+  }
+
+  const exSelect=document.getElementById('prog-ex-select');
+  const periodDays=parseInt(document.getElementById('prog-period-select')?.value||'30');
+  const filterEx=exSelect?exSelect.value:'';
+
+  // Populate exercise selector
+  const allExNames=[...new Set(sheetsData.map(r=>r.exercicio))].sort();
+  const curVal=exSelect?exSelect.value:'';
+  if(exSelect){
+    exSelect.innerHTML='<option value="">todos</option>'+allExNames.map(n=>`<option value="${n}"${n===curVal?' selected':''}>${n}</option>`).join('');
+  }
+
+  const content=document.getElementById('prog-content');
+  if(!sheetsData.length){
+    content.innerHTML=`<div class="prog-empty"><strong>Sem dados ainda</strong>Salve suas cargas durante o treino e clique em "atualizar do Sheets".</div>`;
+    return;
+  }
+
+  // Filter by period
+  const cutoff=periodDays>0?Date.now()-periodDays*86400000:0;
+  const filtered=sheetsData.filter(r=>{
+    if(periodDays>0){
+      const parts=r.data.split('/');
+      if(parts.length===3){
+        const d=new Date(parts[2],parts[1]-1,parts[0]);
+        if(d.getTime()<cutoff)return false;
+      }
+    }
+    if(filterEx&&r.exercicio!==filterEx)return false;
+    return true;
+  });
+
+  if(!filtered.length){
+    content.innerHTML=`<div class="prog-empty"><strong>Nenhum dado no período</strong>Tente um período maior ou outro exercício.</div>`;
+    return;
+  }
+
+  // Group by exercicio+serie
+  const groups={};
+  filtered.forEach(r=>{
+    const k=r.exercicio+'||'+r.serie;
+    if(!groups[k])groups[k]={exercicio:r.exercicio,serie:r.serie,entries:[]};
+    groups[k].entries.push({data:r.data,carga:r.carga});
+  });
+
+  // Stats
+  const allCargas=filtered.map(r=>r.carga).filter(c=>c>0);
+  const maxCarga=allCargas.length?Math.max(...allCargas):0;
+  const maxEx=filtered.find(r=>r.carga===maxCarga);
+  const totalSessoes=new Set(filtered.map(r=>r.data)).size;
+  const totalExercicios=new Set(filtered.map(r=>r.exercicio)).size;
+
+  // Destroy old charts
+  Object.values(progCharts).forEach(c=>{try{c.destroy();}catch{}});
+  progCharts={};
+
+  let html=`<div class="prog-stats-grid">
+  <div class="stat-card"><div class="stat-label">sessões registradas</div><div class="stat-value">${totalSessoes}</div><div class="stat-sub">no período</div></div>
+  <div class="stat-card"><div class="stat-label">exercícios monitorados</div><div class="stat-value">${totalExercicios}</div></div>
+  <div class="stat-card"><div class="stat-label">maior carga</div><div class="stat-value">${maxCarga}kg</div><div class="stat-sub">${maxEx?maxEx.exercicio.split('(')[0].trim():''}</div></div>
+</div>
+<div class="prog-section-title">evolução por exercício</div>`;
+
+  const chartIds=[];
+  Object.values(groups).forEach((g,gi)=>{
+    // Sort entries by date
+    const entries=g.entries.slice().sort((a,b)=>{
+      const pa=a.data.split('/'),pb=b.data.split('/');
+      return new Date(pa[2],pa[1]-1,pa[0])-new Date(pb[2],pb[1]-1,pb[0]);
+    });
+    const labels=entries.map(e=>e.data);
+    const valores=entries.map(e=>e.carga);
+    const first=valores[0]||0,last=valores[valores.length-1]||0;
+    const delta=last-first;
+    const deltaStr=delta>0?`+${delta.toFixed(1)}kg`:delta<0?`${delta.toFixed(1)}kg`:'estável';
+    const deltaColor=delta>0?'#c8f135':delta<0?'#e63946':'#888';
+    const cid='chart-'+gi;
+    chartIds.push({cid,labels,valores});
+    html+=`<div class="chart-card">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+    <div><div class="chart-card-title">${g.exercicio}</div><div class="chart-card-sub">${g.serie}</div></div>
+    <div style="font-size:0.78rem;font-family:'DM Mono',monospace;color:${deltaColor};font-weight:500;">${deltaStr}</div>
+  </div>
+  <div class="chart-wrap"><canvas id="${cid}"></canvas></div>
+</div>`;
+  });
+
+  content.innerHTML=html;
+
+  // Draw charts after DOM update
+  requestAnimationFrame(()=>{
+    chartIds.forEach(({cid,labels,valores})=>{
+      const ctx=document.getElementById(cid);
+      if(!ctx)return;
+      progCharts[cid]=new Chart(ctx,{
+        type:'line',
+        data:{
+          labels,
+          datasets:[{
+            data:valores,
+            borderColor:'#c8f135',
+            backgroundColor:'rgba(200,241,53,0.08)',
+            borderWidth:2,
+            pointBackgroundColor:'#c8f135',
+            pointRadius:4,
+            pointHoverRadius:6,
+            fill:true,
+            tension:0.3
+          }]
+        },
+        options:{
+          responsive:true,maintainAspectRatio:false,
+          plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.parsed.y} kg`}}},
+          scales:{
+            x:{ticks:{color:'#666',font:{size:10},maxRotation:0},grid:{color:'#1e1e1e'}},
+            y:{ticks:{color:'#666',font:{size:10},callback:v=>v+'kg'},grid:{color:'#1e1e1e'},beginAtZero:false}
+          }
+        }
+      });
+    });
+  });
+}
+
+// ── MODAL ───────────────────────────────────────────────────────────────────
+function closeModal(){document.getElementById('modal-root').innerHTML='';}
+
+function openAdd(treinoId){
+  editingTreino=treinoId; editingIndex=null;
+  showModal({nome:'',series:'3 x 10',series_cargas:null,mobility:false,video:'',img:'',sub:null,descanso:'1:00',descanso_label:''});
+}
+
+function openEdit(treinoId,idx){
+  editingTreino=treinoId; editingIndex=idx;
+  const t=treinos.find(t=>t.id===treinoId);
+  showModal(JSON.parse(JSON.stringify(t.exercicios[idx])));
+}
+
+function showModal(ex){
+  const isMulti=!!(ex.series_cargas&&ex.series_cargas.length>0);
+  const seriesRowsHtml=(ex.series_cargas||[]).map((s,i)=>`
+    <div class="series-edit-row" id="serow-${i}">
+      <input placeholder="Label (ex: Série 1)" value="${s.label||''}" data-si="${i}" data-field="label">
+      <input placeholder="Reps (ex: 10 a 12 reps)" value="${s.reps||''}" data-si="${i}" data-field="reps">
+      <button onclick="removeSeriesRow(${i})">✕</button>
+    </div>`).join('');
+
+  const html=`<div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+<div class="modal-box">
+  <div class="modal-title">${editingIndex===null?'Novo exercício':'Editar exercício'}</div>
+  <div class="form-group"><label class="form-label">Nome do exercício</label><input class="form-input" id="f-nome" value="${ex.nome||''}"></div>
+  <div class="form-group"><label class="form-check"><input type="checkbox" id="f-mobility" ${ex.mobility?'checked':''}> Exercício de mobilidade (destaque roxo)</label></div>
+  <div class="form-group">
+    <label class="form-check" id="multi-toggle-wrap"><input type="checkbox" id="f-multi" ${isMulti?'checked':''} onchange="toggleMultiSeries()"> Séries com cargas diferentes</label>
+  </div>
+  <div id="single-series-wrap" style="display:${isMulti?'none':'block'}">
+    <div class="form-group"><label class="form-label">Séries / repetições (ex: 3 x 10a12)</label><input class="form-input" id="f-series" value="${ex.series||''}"></div>
+  </div>
+  <div id="multi-series-wrap" style="display:${isMulti?'block':'none'}">
+    <div class="form-label" style="margin-bottom:6px">Séries individuais</div>
+    <div class="series-edit-grid" id="series-edit-grid">${seriesRowsHtml}</div>
+    <button class="add-series-btn" onclick="addSeriesRow()">+ adicionar série</button>
+  </div>
+  <div class="form-group" style="margin-top:1rem"><label class="form-label">Descanso (ex: 1:00 ou 0:30)</label><input class="form-input" id="f-descanso" value="${ex.descanso||'1:00'}"></div>
+  <div class="form-group"><label class="form-label">Label do descanso (opcional, ex: descanso após mobilidade)</label><input class="form-input" id="f-descanso-label" value="${ex.descanso_label||''}"></div>
+  <div class="form-group"><label class="form-label">URL do vídeo (YouTube)</label><input class="form-input" id="f-video" value="${ex.video||''}"></div>
+  <div class="form-group"><label class="form-label">URL da foto (Unsplash, imgur, etc.)</label><input class="form-input" id="f-img" value="${ex.img||''}"></div>
+  <div class="form-group"><label class="form-label">Substituição no prédio — nome</label><input class="form-input" id="f-sub-nome" value="${ex.sub?ex.sub.nome:''}"></div>
+  <div class="form-group"><label class="form-label">Substituição no prédio — dica</label><textarea class="form-textarea" id="f-sub-dica">${ex.sub?ex.sub.dica:''}</textarea></div>
+  <div class="form-group"><label class="form-label">Substituição no prédio — URL vídeo</label><input class="form-input" id="f-sub-video" value="${ex.sub?ex.sub.video:''}"></div>
+  <div class="modal-actions">
+    ${editingIndex!==null?`<button class="modal-btn modal-btn-danger" onclick="confirmDeleteFromModal()">Remover</button>`:''}
+    <button class="modal-btn modal-btn-cancel" onclick="closeModal()">Cancelar</button>
+    <button class="modal-btn modal-btn-save" onclick="saveModal()">Salvar</button>
+  </div>
+</div></div>`;
+  document.getElementById('modal-root').innerHTML=html;
+}
+
+function toggleMultiSeries(){
+  const on=document.getElementById('f-multi').checked;
+  document.getElementById('single-series-wrap').style.display=on?'none':'block';
+  document.getElementById('multi-series-wrap').style.display=on?'block':'none';
+  if(on&&!document.getElementById('series-edit-grid').children.length)addSeriesRow();
+}
+
+let _seriesCount=0;
+function addSeriesRow(){
+  const grid=document.getElementById('series-edit-grid');
+  const i=_seriesCount++;
+  const div=document.createElement('div');
+  div.className='series-edit-row';
+  div.id='serow-'+i;
+  div.innerHTML=`<input placeholder="Label (ex: Série ${i+1})" data-si="${i}" data-field="label"><input placeholder="Reps (ex: 10 a 12 reps)" data-si="${i}" data-field="reps"><button onclick="this.parentElement.remove()">✕</button>`;
+  grid.appendChild(div);
+}
+function removeSeriesRow(i){const el=document.getElementById('serow-'+i);if(el)el.remove();}
+
+function getSeriesFromModal(){
+  const rows=document.querySelectorAll('#series-edit-grid .series-edit-row');
+  const result=[];
+  rows.forEach(row=>{
+    const inputs=row.querySelectorAll('input');
+    const label=inputs[0].value.trim();
+    const reps=inputs[1].value.trim();
+    if(label||reps)result.push({label:label||'Série',reps:reps||''});
+  });
+  return result;
+}
+
+function saveModal(){
+  const t=treinos.find(t=>t.id===editingTreino);
+  const isMulti=document.getElementById('f-multi').checked;
+  const seriesList=isMulti?getSeriesFromModal():null;
+  const subNome=document.getElementById('f-sub-nome').value.trim();
+  const subDica=document.getElementById('f-sub-dica').value.trim();
+  const subVideo=document.getElementById('f-sub-video').value.trim();
+  const ex={
+    nome:document.getElementById('f-nome').value.trim(),
+    mobility:document.getElementById('f-mobility').checked,
+    video:document.getElementById('f-video').value.trim(),
+    img:document.getElementById('f-img').value.trim(),
+    descanso:document.getElementById('f-descanso').value.trim()||'1:00',
+    descanso_label:document.getElementById('f-descanso-label').value.trim(),
+    sub:(subNome||subDica)?{nome:subNome,dica:subDica,video:subVideo}:null,
+  };
+  if(isMulti){ex.series_cargas=seriesList;}
+  else{ex.series=document.getElementById('f-series').value.trim();}
+
+  if(editingIndex===null){
+    ex.carga_key=nextKey(editingTreino);
+    ex.num=nextNum(editingTreino);
+    t.exercicios.push(ex);
+  } else {
+    ex.carga_key=t.exercicios[editingIndex].carga_key;
+    ex.num=t.exercicios[editingIndex].num;
+    t.exercicios[editingIndex]=ex;
+  }
+  saveTreinos(treinos);
+  closeModal();
+  render();
+}
+
+function confirmDelete(treinoId,idx){
+  if(!confirm('Remover este exercício?'))return;
+  const t=treinos.find(t=>t.id===treinoId);
+  t.exercicios.splice(idx,1);
+  renumberExercises(t.exercicios);
+  saveTreinos(treinos);
+  render();
+}
+function confirmDeleteFromModal(){
+  if(!confirm('Remover este exercício?'))return;
+  const t=treinos.find(t=>t.id===editingTreino);
+  t.exercicios.splice(editingIndex,1);
+  renumberExercises(t.exercicios);
+  saveTreinos(treinos);
+  closeModal();
+  render();
+}
+
+function updateTag(input){
+  const meta=input.closest('.exercise-card').querySelector('.ex-meta');
+  let badge=meta.querySelector('.tag:not(.series):not(.mob-tag)');
+  if(input.value){
+    if(!badge){badge=document.createElement('span');badge.className='tag';meta.appendChild(badge);}
+    badge.textContent='🏋 '+input.value+' kg';
+  } else if(badge) badge.remove();
+}
+function updateMultiTag(baseKey,count){
+  const meta=document.getElementById('meta-'+baseKey);
+  const vals=[];
+  for(let i=0;i<count;i++){const inp=document.querySelector('[data-key="'+baseKey+'_s'+i+'"]');if(inp&&inp.value)vals.push(inp.value);}
+  let badge=meta.querySelector('.tag:not(.series):not(.mob-tag)');
+  if(vals.length){
+    if(!badge){badge=document.createElement('span');badge.className='tag';meta.appendChild(badge);}
+    badge.textContent='🏋 '+vals.join('→')+' kg';
+  } else if(badge) badge.remove();
+}
+
+render();
+</script>
+</body>
+</html>
