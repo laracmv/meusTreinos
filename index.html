@@ -551,7 +551,7 @@ function toggleDone(key,cardId){
     card.style.overflow='visible';
     const dino=document.createElement('div');
     dino.className='dino-hit';
-    const dinoBase='https://laracmv.github.io/meus-treinos/assets/dino/';
+    const dinoBase='./assets/dino/';
     const img=document.createElement('img');
     img.src=dinoBase+'dino1.png';
     dino.appendChild(img);
@@ -609,7 +609,7 @@ function launchCelebration(){
   // Dino
   const dino=document.createElement('div');
   dino.className='dino-wrap';
-  dino.innerHTML=`<img src="https://laracmv.github.io/meus-treinos/assets/dino/dino3.png" style="width:80px;height:80px;object-fit:contain;filter:drop-shadow(0 0 10px rgba(200,241,53,0.8))"><div class="dino-label">treino concluído!</div>`;
+  dino.innerHTML=`<img src="./assets/dino/dino3.png" style="width:80px;height:80px;object-fit:contain;filter:drop-shadow(0 0 10px rgba(200,241,53,0.8))"><div class="dino-label">treino concluído!</div>`;
   document.body.appendChild(dino);
 
   setTimeout(()=>{
